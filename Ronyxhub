@@ -1,11 +1,10 @@
-local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/RedzLibV5/main/Source.lua"))()
-if not redzlib then
-    warn("Erro ao carregar RedzLib!")
-    return
-end
-
--- Criando a janela principal
-local window = redzlib:Window("RONY HUB", "Script Universal")
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+local Window = OrionLib:MakeWindow({
+    Name = "RONY HUB",
+    HidePremium = false,
+    SaveConfig = false,
+    IntroText = "Carregando..."
+})
 
 local player = game.Players.LocalPlayer
 local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -14,20 +13,53 @@ local noclip = false
 local infiniteJump = false
 local espEnabled = false
 
--- Velocidade
-local speedSlider = window:Slider("Velocidade", 16, 500, 16, function(value)
-    if humanoid then humanoid.WalkSpeed = value end
+-- Criando uma aba principal
+local Tab = Window:MakeTab({Name = "Main", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+
+-- Botão para minimizar/maximizar
+local UI_Visible = true
+local Button = Instance.new("ImageButton")
+Button.Parent = game.CoreGui
+Button.Size = UDim2.new(0, 50, 0, 50)
+Button.Position = UDim2.new(0, 10, 0, 10)
+Button.BackgroundTransparency = 1
+Button.Image = "rbxassetid://773405048" -- Ícone (pode trocar)
+
+Button.MouseButton1Click:Connect(function()
+    UI_Visible = not UI_Visible
+    Window.Enabled = UI_Visible
 end)
 
--- Pulo alto
-local jumpSlider = window:Slider("Altura do Pulo", 50, 500, 50, function(value)
-    if humanoid then humanoid.JumpPower = value end
-end)
+-- Velocidade
+Tab:AddSlider({
+    Name = "Velocidade",
+    Min = 16,
+    Max = 500,
+    Default = 16,
+    Callback = function(value)
+        if humanoid then humanoid.WalkSpeed = value end
+    end
+})
+
+-- Pulo Alto
+Tab:AddSlider({
+    Name = "Altura do Pulo",
+    Min = 50,
+    Max = 500,
+    Default = 50,
+    Callback = function(value)
+        if humanoid then humanoid.JumpPower = value end
+    end
+})
 
 -- Pulo Infinito
-local jumpToggle = window:Toggle("Pulo Infinito", false, function(state)
-    infiniteJump = state
-end)
+Tab:AddToggle({
+    Name = "Pulo Infinito",
+    Default = false,
+    Callback = function(state)
+        infiniteJump = state
+    end
+})
 
 game:GetService("UserInputService").JumpRequest:Connect(function()
     if infiniteJump and humanoid then
@@ -36,14 +68,24 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
 end)
 
 -- Gravidade
-local gravitySlider = window:Slider("Gravidade", 0, 500, 196, function(value)
-    game.Workspace.Gravity = value
-end)
+Tab:AddSlider({
+    Name = "Gravidade",
+    Min = 0,
+    Max = 500,
+    Default = 196,
+    Callback = function(value)
+        game.Workspace.Gravity = value
+    end
+})
 
 -- NoClip
-local noclipToggle = window:Toggle("NoClip", false, function(state)
-    noclip = state
-end)
+Tab:AddToggle({
+    Name = "NoClip",
+    Default = false,
+    Callback = function(state)
+        noclip = state
+    end
+})
 
 game:GetService("RunService").Stepped:Connect(function()
     if noclip and player.Character then
@@ -54,69 +96,97 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 -- Expectar Jogador
-local spectateBox = window:Textbox("Nome do jogador para Expectar", function(value)
-    local target = game.Players:FindFirstChild(value)
-    if target and target.Character then
-        workspace.CurrentCamera.CameraSubject = target.Character
+Tab:AddTextbox({
+    Name = "Nome do jogador para Expectar",
+    Default = "",
+    TextDisappear = true,
+    Callback = function(value)
+        local target = game.Players:FindFirstChild(value)
+        if target and target.Character then
+            workspace.CurrentCamera.CameraSubject = target.Character
+        end
     end
-end)
+})
 
-window:Button("Parar de Expectar", function()
-    workspace.CurrentCamera.CameraSubject = humanoid
-end)
+Tab:AddButton({
+    Name = "Parar de Expectar",
+    Callback = function()
+        workspace.CurrentCamera.CameraSubject = humanoid
+    end
+})
 
 -- ESP Hack
-local espToggle = window:Toggle("ESP Hack", false, function(state)
-    espEnabled = state
-    while espEnabled do
-        for _, v in pairs(game.Players:GetPlayers()) do
-            if v ~= player and v.Character and not v.Character:FindFirstChild("ESP") then
-                local esp = Instance.new("Highlight", v.Character)
-                esp.Name = "ESP"
-                esp.FillColor = Color3.fromRGB(255, 0, 0)
-                esp.FillTransparency = 0.5
-                esp.OutlineColor = Color3.fromRGB(255, 255, 255)
-            elseif not state and v.Character:FindFirstChild("ESP") then
-                v.Character:FindFirstChild("ESP"):Destroy()
+Tab:AddToggle({
+    Name = "ESP Hack",
+    Default = false,
+    Callback = function(state)
+        espEnabled = state
+        while espEnabled do
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= player and v.Character and not v.Character:FindFirstChild("ESP") then
+                    local esp = Instance.new("Highlight", v.Character)
+                    esp.Name = "ESP"
+                    esp.FillColor = Color3.fromRGB(255, 0, 0)
+                    esp.FillTransparency = 0.5
+                    esp.OutlineColor = Color3.fromRGB(255, 255, 255)
+                elseif not state and v.Character:FindFirstChild("ESP") then
+                    v.Character:FindFirstChild("ESP"):Destroy()
+                end
             end
+            wait(0.5)
         end
-        wait(0.5)
     end
-end)
+})
 
 -- Fly
-local flyToggle = window:Toggle("Fly", false, function(state)
-    flying = state
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bodyVelocity.Velocity = Vector3.new(0, 50, 0)
-    
-    while flying do
-        if humanoid and humanoid.Parent then
-            humanoid.Parent:FindFirstChild("HumanoidRootPart").Velocity = Vector3.new(0, 50, 0)
+Tab:AddToggle({
+    Name = "Fly",
+    Default = false,
+    Callback = function(state)
+        flying = state
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bodyVelocity.Velocity = Vector3.new(0, 50, 0)
+        
+        while flying do
+            if humanoid and humanoid.Parent then
+                humanoid.Parent:FindFirstChild("HumanoidRootPart").Velocity = Vector3.new(0, 50, 0)
+            end
+            wait()
         end
-        wait()
     end
-end)
+})
 
 -- Teleport para Jogadores
-local teleportBox = window:Textbox("Nome do jogador para Teleport", function(value)
-    local target = game.Players:FindFirstChild(value)
-    if target and target.Character and humanoid then
-        humanoid.Parent:MoveTo(target.Character:GetPrimaryPartCFrame().Position)
+Tab:AddTextbox({
+    Name = "Nome do jogador para Teleport",
+    Default = "",
+    TextDisappear = true,
+    Callback = function(value)
+        local target = game.Players:FindFirstChild(value)
+        if target and target.Character and humanoid then
+            humanoid.Parent:MoveTo(target.Character:GetPrimaryPartCFrame().Position)
+        end
     end
-end)
+})
 
 -- Zoom Infinito
-window:Button("Destravar Câmera (Zoom Infinito)", function()
-    game.Players.LocalPlayer.CameraMaxZoomDistance = math.huge
-end)
+Tab:AddButton({
+    Name = "Destravar Câmera (Zoom Infinito)",
+    Callback = function()
+        game.Players.LocalPlayer.CameraMaxZoomDistance = math.huge
+    end
+})
 
 -- Remover Objetos do Mapa
-window:Button("Remover Objetos do Mapa", function()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Part") or v:IsA("MeshPart") then v:Destroy() end
+Tab:AddButton({
+    Name = "Remover Objetos do Mapa",
+    Callback = function()
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Part") or v:IsA("MeshPart") then v:Destroy() end
+        end
     end
-end)
+})
 
+OrionLib:Init()
 print("RONY HUB - Carregado com sucesso!")
