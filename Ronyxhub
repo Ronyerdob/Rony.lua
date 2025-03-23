@@ -1,4 +1,10 @@
 local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/RedzLibV5/main/Source.lua"))()
+if not redzlib then
+    warn("Erro ao carregar RedzLib!")
+    return
+end
+
+-- Criando a janela principal
 local window = redzlib:Window("RONY HUB", "Script Universal")
 
 local player = game.Players.LocalPlayer
@@ -8,22 +14,18 @@ local noclip = false
 local infiniteJump = false
 local espEnabled = false
 
--- Ajustar Velocidade
-window:Slider("Velocidade", 16, 500, 16, function(value)
-    if humanoid then
-        humanoid.WalkSpeed = value
-    end
+-- Velocidade
+local speedSlider = window:Slider("Velocidade", 16, 500, 16, function(value)
+    if humanoid then humanoid.WalkSpeed = value end
 end)
 
--- Ajustar Altura do Pulo
-window:Slider("Altura do Pulo", 50, 500, 50, function(value)
-    if humanoid then
-        humanoid.JumpPower = value
-    end
+-- Pulo alto
+local jumpSlider = window:Slider("Altura do Pulo", 50, 500, 50, function(value)
+    if humanoid then humanoid.JumpPower = value end
 end)
 
 -- Pulo Infinito
-window:Toggle("Pulo Infinito", false, function(state)
+local jumpToggle = window:Toggle("Pulo Infinito", false, function(state)
     infiniteJump = state
 end)
 
@@ -33,41 +35,38 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
     end
 end)
 
--- Gravidade Personalizada
-window:Slider("Gravidade", 0, 500, 196, function(value)
+-- Gravidade
+local gravitySlider = window:Slider("Gravidade", 0, 500, 196, function(value)
     game.Workspace.Gravity = value
 end)
 
--- NoClip (Atravessar paredes)
-window:Toggle("NoClip", false, function(state)
+-- NoClip
+local noclipToggle = window:Toggle("NoClip", false, function(state)
     noclip = state
 end)
 
 game:GetService("RunService").Stepped:Connect(function()
     if noclip and player.Character then
         for _, part in pairs(player.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
 end)
 
--- Expectar jogador
-window:Textbox("Nome do jogador para Expectar", function(value)
+-- Expectar Jogador
+local spectateBox = window:Textbox("Nome do jogador para Expectar", function(value)
     local target = game.Players:FindFirstChild(value)
     if target and target.Character then
         workspace.CurrentCamera.CameraSubject = target.Character
     end
 end)
 
--- Parar Expectar
 window:Button("Parar de Expectar", function()
     workspace.CurrentCamera.CameraSubject = humanoid
 end)
 
--- ESP (Ver jogadores através das paredes)
-window:Toggle("ESP Hack", false, function(state)
+-- ESP Hack
+local espToggle = window:Toggle("ESP Hack", false, function(state)
     espEnabled = state
     while espEnabled do
         for _, v in pairs(game.Players:GetPlayers()) do
@@ -85,8 +84,8 @@ window:Toggle("ESP Hack", false, function(state)
     end
 end)
 
--- Fly (Voar)
-window:Toggle("Fly", false, function(state)
+-- Fly
+local flyToggle = window:Toggle("Fly", false, function(state)
     flying = state
     local bodyVelocity = Instance.new("BodyVelocity")
     bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
@@ -101,14 +100,14 @@ window:Toggle("Fly", false, function(state)
 end)
 
 -- Teleport para Jogadores
-window:Textbox("Nome do jogador para Teleport", function(value)
+local teleportBox = window:Textbox("Nome do jogador para Teleport", function(value)
     local target = game.Players:FindFirstChild(value)
     if target and target.Character and humanoid then
         humanoid.Parent:MoveTo(target.Character:GetPrimaryPartCFrame().Position)
     end
 end)
 
--- Zoom Infinito (Destravar câmera)
+-- Zoom Infinito
 window:Button("Destravar Câmera (Zoom Infinito)", function()
     game.Players.LocalPlayer.CameraMaxZoomDistance = math.huge
 end)
@@ -116,9 +115,7 @@ end)
 -- Remover Objetos do Mapa
 window:Button("Remover Objetos do Mapa", function()
     for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Part") or v:IsA("MeshPart") then
-            v:Destroy()
-        end
+        if v:IsA("Part") or v:IsA("MeshPart") then v:Destroy() end
     end
 end)
 
