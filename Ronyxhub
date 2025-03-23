@@ -1,0 +1,125 @@
+local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realredz/RedzLibV5/main/Source.lua"))()
+local window = redzlib:Window("RONY HUB", "Script Universal")
+
+local player = game.Players.LocalPlayer
+local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+local flying = false
+local noclip = false
+local infiniteJump = false
+local espEnabled = false
+
+-- Ajustar Velocidade
+window:Slider("Velocidade", 16, 500, 16, function(value)
+    if humanoid then
+        humanoid.WalkSpeed = value
+    end
+end)
+
+-- Ajustar Altura do Pulo
+window:Slider("Altura do Pulo", 50, 500, 50, function(value)
+    if humanoid then
+        humanoid.JumpPower = value
+    end
+end)
+
+-- Pulo Infinito
+window:Toggle("Pulo Infinito", false, function(state)
+    infiniteJump = state
+end)
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infiniteJump and humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- Gravidade Personalizada
+window:Slider("Gravidade", 0, 500, 196, function(value)
+    game.Workspace.Gravity = value
+end)
+
+-- NoClip (Atravessar paredes)
+window:Toggle("NoClip", false, function(state)
+    noclip = state
+end)
+
+game:GetService("RunService").Stepped:Connect(function()
+    if noclip and player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- Expectar jogador
+window:Textbox("Nome do jogador para Expectar", function(value)
+    local target = game.Players:FindFirstChild(value)
+    if target and target.Character then
+        workspace.CurrentCamera.CameraSubject = target.Character
+    end
+end)
+
+-- Parar Expectar
+window:Button("Parar de Expectar", function()
+    workspace.CurrentCamera.CameraSubject = humanoid
+end)
+
+-- ESP (Ver jogadores através das paredes)
+window:Toggle("ESP Hack", false, function(state)
+    espEnabled = state
+    while espEnabled do
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= player and v.Character and not v.Character:FindFirstChild("ESP") then
+                local esp = Instance.new("Highlight", v.Character)
+                esp.Name = "ESP"
+                esp.FillColor = Color3.fromRGB(255, 0, 0)
+                esp.FillTransparency = 0.5
+                esp.OutlineColor = Color3.fromRGB(255, 255, 255)
+            elseif not state and v.Character:FindFirstChild("ESP") then
+                v.Character:FindFirstChild("ESP"):Destroy()
+            end
+        end
+        wait(0.5)
+    end
+end)
+
+-- Fly (Voar)
+window:Toggle("Fly", false, function(state)
+    flying = state
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bodyVelocity.Velocity = Vector3.new(0, 50, 0)
+    
+    while flying do
+        if humanoid and humanoid.Parent then
+            humanoid.Parent:FindFirstChild("HumanoidRootPart").Velocity = Vector3.new(0, 50, 0)
+        end
+        wait()
+    end
+end)
+
+-- Teleport para Jogadores
+window:Textbox("Nome do jogador para Teleport", function(value)
+    local target = game.Players:FindFirstChild(value)
+    if target and target.Character and humanoid then
+        humanoid.Parent:MoveTo(target.Character:GetPrimaryPartCFrame().Position)
+    end
+end)
+
+-- Zoom Infinito (Destravar câmera)
+window:Button("Destravar Câmera (Zoom Infinito)", function()
+    game.Players.LocalPlayer.CameraMaxZoomDistance = math.huge
+end)
+
+-- Remover Objetos do Mapa
+window:Button("Remover Objetos do Mapa", function()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Part") or v:IsA("MeshPart") then
+            v:Destroy()
+        end
+    end
+end)
+
+print("RONY HUB - Carregado com sucesso!")
